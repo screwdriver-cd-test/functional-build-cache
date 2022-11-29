@@ -1,0 +1,45 @@
+cache:
+  event:
+    - event.txt
+    - event
+  pipeline:
+    - pipeline.txt
+    - pipeline
+  job:
+    check-job:
+      - job.txt
+      - job
+
+shared:
+  image: node:16
+
+jobs:
+  create-cache:
+    requires: [ ~commit ]
+    steps:
+      - event: |
+          echo 'event' > event.txt
+          mkdir -p event
+          echo 'event' > event/cache.txt
+      - pipeline: |
+          echo 'pipeline' > pipeline.txt
+          mkdir -p pipeline
+          echo 'pipeline' > pipeline/cache.txt
+  check-event-and-pipeline:
+    requires: create-cache
+    steps:
+      - check-cache: |
+          cat event.txt
+          cat event/cache.txt
+          cat pipeline.txt
+          cat pipeline/cache.txt
+  check-job:
+    requires: []
+    steps:
+      - check-cache: |
+          cat job.txt || true
+          cat job/cache.txt || true
+      - create-cache: |
+          echo 'job-level-cache' > job.txt
+          mkdir -p job
+          echo 'job-level-cache-directory' > job/cache.txt
